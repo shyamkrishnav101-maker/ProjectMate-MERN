@@ -1,8 +1,33 @@
-import { Router } from "express";
-import { register, login, me } from "../controllers/authController.js";
-import { protect } from "../middleware/auth.js";
-const router = Router();
-router.post("/register", register);
-router.post("/login", login);
-router.get("/me", protect, me);
-export default router;
+const API = "https://projectmate-mern.onrender.com/api";
+
+export function getToken() {
+  return localStorage.getItem("pm_token");
+}
+
+export async function api(path, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
+
+  const token = getToken();
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API}${path}`, {
+    ...options,
+    headers
+  });
+
+  const data = await response.json().catch(() => ({
+    message: "Unexpected server response"
+  }));
+
+  if (!response.ok) {
+    throw new Error(data.message || "Request failed");
+  }
+
+  return data;
+}
